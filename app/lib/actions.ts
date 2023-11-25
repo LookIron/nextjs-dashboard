@@ -75,12 +75,30 @@ const UpdateInvoice = FormSchema.omit({ id: true, date: true }); //1. Extracting
 
 // ...
 
-export async function updateInvoice(id: string, formData: FormData) {
-  const { customerId, amount, status } = UpdateInvoice.parse({
+export async function updateInvoice(
+  id: string,
+  prevState: State,
+  formData: FormData,
+) {
+  const validatedFields = UpdateInvoice.safeParse({
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
-  }); // 2. Validating the types with Zod.
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Invoice.',
+    };
+  }
+
+  const { customerId, amount, status } = validatedFields.data;
+  //   const { customerId, amount, status } = UpdateInvoice.parse({
+  //     customerId: formData.get('customerId'),
+  //     amount: formData.get('amount'),
+  //     status: formData.get('status'),
+  //   }); // 2. Validating the types with Zod.
 
   const amountInCents = amount * 100; // 3. Converting the amount to cents.
   try {
