@@ -25,13 +25,19 @@ export async function createInvoice(formData: FormData) {
     });
     const amountInCents = amount * 100;
     const date = new Date().toISOString().split('T')[0];
-    // Test it out:
-    //console.log( { customerId, amount,amountInCents, status });
-    await sql`
-        INSERT INTO invoices (customer_id, amount, status, date)
-        VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-    `;
-
+    try {
+        // Test it out:
+        //console.log( { customerId, amount,amountInCents, status });
+        await sql`
+            INSERT INTO invoices (customer_id, amount, status, date)
+            VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+        `;
+    
+    } catch (error) {
+        return {
+            message: 'Database Error: Failed to Create Invoice.',
+        };
+    }
     revalidatePath('/dashboard/invoices');
     redirect('/dashboard/invoices');
 }
@@ -49,18 +55,31 @@ export async function updateInvoice(id: string, formData: FormData) {
   });// 2. Validating the types with Zod.
  
   const amountInCents = amount * 100; // 3. Converting the amount to cents.
- 
-  await sql`
+ try {
+    await sql`
     UPDATE invoices
     SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
     WHERE id = ${id}
   `;// 4. Passing the variables to your SQL query.
  
+ } catch (error) {
+    return {
+        message: 'Database Error: Failed to Update Invoice.',
+    };
+ }
+
   revalidatePath('/dashboard/invoices'); //5. Calling revalidatePath to clear the client cache and make a new server request.
   redirect('/dashboard/invoices'); //6. Calling redirect to redirect the user to the invoice's page.
 }
 
 export async function deleteInvoice(id: string) {
-    await sql`DELETE FROM invoices WHERE id = ${id}`;
+    // throw new Error('Failed to Delete Invoice');
+    try {
+        await sql`DELETE FROM invoices WHERE id = ${id}`;
+    } catch (error) {
+        return {
+            message: 'Database Error: Failed to Delete Invoice.',
+        };
+    };
     revalidatePath('/dashboard/invoices');
   }
